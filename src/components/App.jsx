@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { ColorRing } from  'react-loader-spinner'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -12,81 +12,76 @@ import Loader from './Loader/Loader';
 import Modal from './Modal/Modal';
 import css from './App.module.css';
 
-class App extends Component {
-  state = {
-    inputSearch: '',
-    hits: [],
-    page: 1,
-    modalImageURL: '',
-    loading: false,
-    showModal: false,
-    endOfCollection: false,
-    tags: '',
-  }
+const App = () => {
 
-async componentDidUpdate(_, prevState) {
-  const { inputSearch, page } = this.state;
-    if (inputSearch !== prevState.inputSearch || page !== prevState.page) {
+  const [inputSearch, setInputSearch] = useState('');
+  const [hits, setHits] = useState([]);
+  const [page, setPage] = useState(1);
+  const [modalImageURL, setModalImageURL] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [endOfCollection, setEndOfCollection] = useState(false);
+  const [tags, setTags] = useState('');
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      if (!inputSearch) return;
+
       try {
-        this.setState({ loading: true })
-      
-        const data = await getImages(inputSearch, page)
+        setLoading(true);
 
-             //успішний запит
-          this.setState(prevState => ({
-            hits: [...prevState.hits, ...data.hits]
-          }))
-        
-          if (!data.totalHits) {
-            //якщо користувач ввів неіснуючий запит
-            return toast.error(`No results found for ${inputSearch}`);
-          }
+        const data = await getImages(inputSearch, page);
 
-            //завершення колекції
-          const totalPages = Math.ceil(data.totalHits / 12);
-          
-          if (page === totalPages) {
-            this.setState({ endOfCollection: true }); 
-            return toast.error('No more pictures');
-          }
+        setHits(prevHits => [...prevHits, ...data.hits]);
+
+        if (!data.totalHits) {
+          toast.error(`No results found for ${inputSearch}`);
+        }
+
+        const totalPages = Math.ceil(data.totalHits / 12);
+
+        if (page === totalPages) {
+          setEndOfCollection(true);
+          toast.error('No more pictures');
+        }
+      } catch (error) {
+        toast.error(`Something goes wrong. Please, try again.`);
+      } finally {
+        setLoading(false);
       }
-      //помилка від сервера
-      catch (error) {
-        return toast.error(`Something goes wrong. Please, try again.`);
-      }
-
-      finally {
-        this.setState({ loading: false })
-      } 
     }
-  }
-  
-  //очищуємо hits, щоб при новому пошуку оновлювався запит
-  handleFormSubmit = inputSearch => {
-    this.setState({ inputSearch, page: 1, hits: [], endOfCollection: false});
+
+    fetchImages();
+  }, [inputSearch, page]);
+
+  const handleFormSubmit = inputSearch => {
+    setInputSearch(inputSearch);
+    setPage(1);
+    setHits([]);
+    setEndOfCollection(false);
   }
 
-  //пагінація
-  handleLoadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }))
+  const handleLoadMore = () => {
+    setPage(prevState => prevState + 1);
   }
 
-  openModal = (largeImageURL, tags) => {
-    this.setState({ showModal: true, modalImageURL: largeImageURL, tags })
+  const openModal = (largeImageURL, tags) => {
+    setShowModal(true);
+    setModalImageURL(largeImageURL);
+    setTags(tags);
   }
 
-  closeModal = () => {
-    this.setState({ showModal: false, modalImageURL: ''})
+  const closeModal = () => {
+    setShowModal(false);
+    setModalImageURL('');
   }
 
-  render() {
-    const { hits, loading, showModal, modalImageURL, endOfCollection, tags } = this.state;
     const showLoadMoreBtn = hits.length > 0 && !endOfCollection; 
 
     return (
       <div className={css.app}>
 
-        <Searchbar onSubmit={ this.handleFormSubmit} />
+        <Searchbar onSubmit={handleFormSubmit} />
 
         {loading && 
           <Loader>
@@ -103,23 +98,29 @@ async componentDidUpdate(_, prevState) {
 
         {hits && 
           <ImageGallery>
-            <ImageGalleryItem images={hits} onImageClick={this.openModal} />
+            <ImageGalleryItem images={hits} onImageClick={openModal} />
           </ImageGallery>
           }
 
         {showLoadMoreBtn && 
-          <Button onBtnClick={() => this.handleLoadMore()} />
+          <Button onBtnClick={() => handleLoadMore()} />
         } 
 
         {showModal &&
-          <Modal onClose={this.closeModal}>
+          <Modal onClose={closeModal}>
           <img src={modalImageURL} alt={tags} />
         </Modal>}
- 
+
         <ToastContainer autoClose={3000} theme="dark" closeButton={false} />
       </div>
     )
-  }
 }
 
 export default App;
+
+
+
+
+
+
+
