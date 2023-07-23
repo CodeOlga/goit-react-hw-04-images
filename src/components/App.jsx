@@ -25,6 +25,7 @@ const App = () => {
 
   useEffect(() => {
     const fetchImages = async () => {
+      //пропустити перший рендер
       if (!inputSearch) return;
 
       try {
@@ -120,7 +121,7 @@ export default App;
 
 
 
-//test
+
 
 
 
