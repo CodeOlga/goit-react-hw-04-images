@@ -25,7 +25,7 @@ const App = () => {
 
   useEffect(() => {
     const fetchImages = async () => {
-      //пропустити перший рендер
+      //перший рендер, inputSearch порожній, не робимо http-запит
       if (!inputSearch) return;
 
       try {
