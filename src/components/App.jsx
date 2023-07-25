@@ -24,9 +24,10 @@ const App = () => {
   const [tags, setTags] = useState('');
 
   useEffect(() => {
+     //перший рендер, inputSearch порожній, не робимо http-запит
+    if (!inputSearch) return;
+    
     const fetchImages = async () => {
-      //перший рендер, inputSearch порожній, не робимо http-запит
-      if (!inputSearch) return;
 
       try {
         setLoading(true);
